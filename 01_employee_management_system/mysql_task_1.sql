@@ -1,5 +1,4 @@
 -- MYSQL_TASK_1 PROJECT
--- Author: Arun Pragash
 -- Description: Employee Management System with Constraints, Joins, Views and Indexes
 
 
