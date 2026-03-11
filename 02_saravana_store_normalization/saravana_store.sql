@@ -1,38 +1,39 @@
--- SARAVANA_STORE DATABASE PROJECT
--- Description: Table Creation, Normalization and Query Practice
-
-
--- 1. Create database and select it.
-
 CREATE DATABASE Saravana_store;
 USE Saravana_store;
 
-
--- 2. Create initial Sales_Info table (Denormalized Structure).
-
 CREATE TABLE Sales_Info (
-    Product_ID SMALLINT,
-    Product_Name VARCHAR(50),
-    Product_Price DECIMAL(10,2),
-    Customer_ID INT,
-    Customer_Name VARCHAR(50),
-    Customer_EMAILID VARCHAR(100),
-    Customer_Mobile_no VARCHAR(15),
-    Sales_Rep_id SMALLINT,
-    Sales_Rep_Name VARCHAR(15),
-    Sales_Rep_Mobile_no VARCHAR(15),
-    Order_ID VARCHAR(5),
-    Order_Date DATE
+Product_ID SMALLINT,
+Product_Name VARCHAR(50),
+Product_Price DECIMAL(10,2),
+Customer_ID INT,
+Customer_Name VARCHAR(50),
+Customer_EMAILID VARCHAR(100),
+Customer_Mobile_no VARCHAR(15),
+Sales_Rep_id SMALLINT,
+Sales_Rep_Name VARCHAR(15),
+Sales_Rep_Mobile_no VARCHAR(15),
+Order_ID VARCHAR(5),
+Order_Date DATE
 );
-
-
--- 3. Modify column datatypes.
 
 ALTER TABLE Sales_Info MODIFY COLUMN Product_ID INT;
 ALTER TABLE Sales_Info MODIFY COLUMN Sales_Rep_id INT;
+ALTER TABLE Sales_Info
+DROP COLUMN Product_Name,
+DROP COLUMN Product_Price,
+DROP COLUMN Customer_Name,
+DROP COLUMN Customer_EMAILID,
+DROP COLUMN Customer_Mobile_no,
+DROP COLUMN Sales_Rep_Name,
+DROP COLUMN Sales_Rep_Mobile_no,
+DROP COLUMN Order_Date;
+
+ALTER TABLE Sales_Info ADD CONSTRAINT fk_product FOREIGN KEY (Product_ID) REFERENCES Product_Info(Product_ID);
+ALTER TABLE Sales_Info ADD CONSTRAINT fk_customer FOREIGN KEY (Customer_ID) REFERENCES Customer_Info(Customer_ID);
+ALTER TABLE Sales_Info ADD CONSTRAINT fk_sales FOREIGN KEY (Sales_Rep_id) REFERENCES Sales_Rep(Sales_Rep_id);
 
 
--- 4. Insert sales records.
+ALTER TABLE Sales_Info ADD CONSTRAINT fk_Order FOREIGN KEY (Order_ID) REFERENCES Orders_Info(Order_ID);
 
 INSERT INTO Sales_Info VALUES 
 (101,'Shirt',400.00,1002,'ram','ram@gmail.com','+91 9288880000',2,'Jagan','+91 9110300488','Q1','2026-01-13'),
@@ -56,141 +57,85 @@ INSERT INTO Sales_Info VALUES
 (101,'Shirt',400.00,1002,'ram','ram@gmail.com','+91 9288880000',2,'Jagan','+91 9110300488','Q19','2026-02-04'),
 (120,'Wallet',600.00,1015,'Naveen','naveen@gmail.com','+91 9887766554',4,'Vijay','+91 9090909090','Q20','2026-02-05'),
 (110,'Jeans',800.00,1003,'Suresh','suresh@gmail.com','+91 9876543210',3,'Mani','+91 9000001234','Q21','2026-02-06');
-
-
--- 5. Basic verification queries.
-
-SELECT * FROM Sales_Info;
-SELECT * FROM Sales_Info WHERE Product_Price > 300;
-SELECT * FROM Sales_Info WHERE Product_Price % 2 = 0;
-
-
--- 6. Update example.
-
-UPDATE Sales_Info
-SET Customer_EMAILID = 'suresh007@gmail.com'
-WHERE Customer_ID = 1003;
-
-
--- 7. Create Customer_info table.
-
+SELECT * FROM Sales_Info  ;
+SELECT * FROM Sales_Info where Product_Price > 300;
+UPDATE Sales_info set Customer_EMAILID = 'suresh007@gmail.com' where Customer_ID = 1003 ;
+insert into Sales_Info values (
 CREATE TABLE Customer_info (
-    Customer_ID INT PRIMARY KEY,
-    Customer_Name VARCHAR(50),
-    Customer_EMAILID VARCHAR(100),
-    Customer_Mobile_no VARCHAR(15)
+Customer_ID INT UNIQUE,
+Customer_Name VARCHAR(50),
+Customer_EMAILID VARCHAR(100),
+Customer_Mobile_no VARCHAR(15)
 );
+SELECT  Customer_Name , sum(Product_Price) as total_amount FROM Sales_Info 
+GROUP BY Customer_Name;
+SELECT Customer_Name , COUNT(Customer_Name) , sum(Product_Price) as total_amount FROM Sales_Info 
+GROUP BY Customer_Name ORDER BY total_amount DESC LIMIT 5;
+SELECT * FROM Sales_info where Product_Price %2 = 0;
+SELECT * FROM Customer_info;
 
-
--- 8. Insert distinct customers.
-
-INSERT INTO Customer_info
-SELECT DISTINCT Customer_ID, Customer_Name, Customer_EMAILID, Customer_Mobile_no
+INSERT INTO Customer_info  
+SELECT DISTINCT Customer_ID, Customer_Name, Customer_EMAILID, Customer_Mobile_no 
 FROM Sales_Info;
 
 
--- 9. Create Product_info table.
+SELECT S.Customer_ID, C.Customer_Name, Customer_EMAILID FROM Sales_Info S LEFT JOIN Customer_info C on S.Customer_ID = C.Customer_ID;
 
 CREATE TABLE Product_info (
-    Product_ID INT PRIMARY KEY,
-    Product_Name VARCHAR(50),
-    Product_Price DECIMAL(10,2)
+Product_ID SMALLINT,
+Product_Name VARCHAR(50),
+Product_Price DECIMAL(10,2)
 );
-
-
--- 10. Insert distinct products.
 
 INSERT INTO Product_info
-SELECT DISTINCT Product_ID, Product_Name, Product_Price
+SELECT DISTINCT Product_ID, Product_Name, Product_Price 
 FROM Sales_Info;
 
+ALTER TABLE Product_info MODIFY COLUMN Product_ID INT PRIMARY KEY ;
 
--- 11. Create Sales_Rep table.
+SELECT * FROM Product_info;
+SELECT * FROM Product_info order by Product_ID ;
+SELECT * FROM Product_info ORDER BY Product_Price DESC LIMIT 3;
+UPDATE Product_info SET  Product_Name = ' Baggy shirt' where Product_ID = 108;
+SELECT Product_ID as P_ID, Product_name as P_NAME, Product_Price as P_PRICE FROM Product_info ORDER BY Product_Price DESC;
+SELECT  Product_Name , SUM(Product_Price) AS Total_Price FROM Product_info WHERE Product_Name LIKE '%S' OR Product_Name LIKE '%T' GROUP BY Product_Name ORDER BY SUM(Product_Price) DESC; 
 
 CREATE TABLE Sales_Rep(
-    Sales_Rep_id INT PRIMARY KEY,
-    Sales_Rep_Name VARCHAR(50),
-    Sales_Rep_Mobile_no VARCHAR(15)
+Sales_Rep_id INT,
+Sales_Rep_Name VARCHAR(50),
+Sales_Rep_Mobile_no VARCHAR(15)
 );
+ALTER TABLE Sales_Rep MODIFY COLUMN Sales_Rep_id INT PRIMARY KEY;
+SELECT * FROM Sales_Rep;
 
-
--- 12. Insert distinct sales representatives.
-
-INSERT INTO Sales_Rep
-SELECT DISTINCT Sales_Rep_id, Sales_Rep_Name, Sales_Rep_Mobile_no
+INSERT INTO Sales_Rep 
+SELECT DISTINCT Sales_Rep_id, Sales_Rep_Name, Sales_Rep_Mobile_no 
 FROM Sales_Info;
 
-
--- 13. Create Orders_Info table.
+SELECT Sales_Rep_id as REP_ID, Sales_Rep_Name as REP_NAME , Sales_Rep_Mobile_no as REP_NUMBER FROM Sales_Rep ORDER BY Sales_Rep_Name ASC;
 
 CREATE TABLE Orders_Info (
-    Order_ID VARCHAR(5) PRIMARY KEY,
-    Order_Date DATE
+Order_ID VARCHAR(5) UNIQUE,
+Order_Date DATE
 );
-
-
--- 14. Insert distinct orders.
+ALTER TABLE Orders_Info MODIFY COLUMN Order_ID VARCHAR(5) PRIMARY KEY;
+SELECT * FROM Orders_Info;
 
 INSERT INTO Orders_Info
-SELECT DISTINCT Order_ID, Order_Date
+SELECT DISTINCT Order_ID, Order_Date 
 FROM Sales_Info;
 
+SELECT Order_ID as O_ID, Order_Date as O_DATE FROM Orders_Info ORDER BY Order_Date ASC;
+SELECT C.Customer_Name , sum(P.Product_Price) as TOTAL_AMOUNT_SPENDED FROM Sales_info S 
+LEFT join Customer_info C on S.Customer_ID = C.Customer_ID 
+LEFT join Product_info P on S.Product_ID = P.Product_ID 
+group by C.Customer_Name
+HAVING 500 > sum(P.Product_Price);
 
--- 15. Drop redundant columns (Normalization Step).
-
-ALTER TABLE Sales_Info
-DROP COLUMN Product_Name,
-DROP COLUMN Product_Price,
-DROP COLUMN Customer_Name,
-DROP COLUMN Customer_EMAILID,
-DROP COLUMN Customer_Mobile_no,
-DROP COLUMN Sales_Rep_Name,
-DROP COLUMN Sales_Rep_Mobile_no,
-DROP COLUMN Order_Date;
+SELECT repeat(10,10);
 
 
--- 16. Add foreign key constraints.
 
-ALTER TABLE Sales_Info
-ADD CONSTRAINT fk_product FOREIGN KEY (Product_ID) REFERENCES Product_Info(Product_ID);
-
-ALTER TABLE Sales_Info
-ADD CONSTRAINT fk_customer FOREIGN KEY (Customer_ID) REFERENCES Customer_Info(Customer_ID);
-
-ALTER TABLE Sales_Info
-ADD CONSTRAINT fk_sales FOREIGN KEY (Sales_Rep_id) REFERENCES Sales_Rep(Sales_Rep_id);
-
-ALTER TABLE Sales_Info
-ADD CONSTRAINT fk_order FOREIGN KEY (Order_ID) REFERENCES Orders_Info(Order_ID);
+C
 
 
--- 17. Join example.
-
-SELECT S.Customer_ID,
-       C.Customer_Name,
-       C.Customer_EMAILID
-FROM Sales_Info S
-LEFT JOIN Customer_info C
-ON S.Customer_ID = C.Customer_ID;
-
-
--- 18. Analytical queries.
-
-SELECT Product_ID AS P_ID,
-       Product_Name AS P_NAME,
-       Product_Price AS P_PRICE
-FROM Product_info
-ORDER BY Product_Price DESC;
-
-SELECT Product_Name,
-       SUM(Product_Price) AS Total_Price
-FROM Product_info
-WHERE Product_Name LIKE '%S'
-   OR Product_Name LIKE '%T'
-GROUP BY Product_Name
-ORDER BY SUM(Product_Price) DESC;
-
-SELECT Order_ID AS O_ID,
-       Order_Date AS O_DATE
-FROM Orders_Info
-ORDER BY Order_Date ASC;
